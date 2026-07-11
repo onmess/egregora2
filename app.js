@@ -1170,7 +1170,7 @@ function openUserModal(userId){
   const isEditingAdmin = existing?.role==='admin';
   document.getElementById('u_artistAccessWrap').style.display = isEditingAdmin?'none':'block';
   if(!isEditingAdmin){
-    const access = computeAccess(existing)||{};
+    const access = existing ? (computeAccess(existing)||{}) : {};
     document.getElementById('u_artistsList').innerHTML = artists.map(a=>
       `<div class="artist-access-row"><span class="aname">${escapeHtml(a.name)}</span><select data-id="${a.id}"><option value="">Sem acesso</option><option value="editor">Editor</option><option value="musicas">Só músicas</option><option value="leitor">Leitor</option></select></div>`
     ).join('');
@@ -1216,6 +1216,15 @@ document.getElementById('saveUserBtn').addEventListener('click', ()=>{
   toast('Usuário salvo.');
 });
 document.getElementById('newUserBtn').addEventListener('click', ()=>openUserModal(null));
+document.querySelectorAll('input[name="u_role"]').forEach(r=> r.addEventListener('change', ()=>{
+  const isAdminRole = document.querySelector('input[name="u_role"]:checked').value==='admin';
+  document.getElementById('u_artistAccessWrap').style.display = isAdminRole?'none':'block';
+  if(!isAdminRole && !document.getElementById('u_artistsList').innerHTML.trim()){
+    document.getElementById('u_artistsList').innerHTML = artists.map(a=>
+      `<div class="artist-access-row"><span class="aname">${escapeHtml(a.name)}</span><select data-id="${a.id}"><option value="">Sem acesso</option><option value="editor">Editor</option><option value="musicas">Só músicas</option><option value="leitor">Leitor</option></select></div>`
+    ).join('');
+  }
+}));
 document.getElementById('u_isSeller').addEventListener('change', (e)=>{
   document.getElementById('u_commissionWrap').style.display = e.target.checked ? 'block' : 'none';
 });
