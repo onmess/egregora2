@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>EGRÉGORA — Agenda de Eventos</title>
+<title>Egrégora — Agenda de Eventos</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
   :root{
@@ -223,6 +223,10 @@
   .login-error{font-size:12px;color:var(--danger);background:var(--danger-soft);border-radius:10px;padding:9px 12px;margin-bottom:12px;display:none;text-align:center;}
   .login-error.show{display:block;}
   .login-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6;}
+  .credit-mg{font-size:10.5px;color:var(--muted);text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);letter-spacing:0.5px;opacity:0.8;}
+  .credit-mg b{font-family:'Fraunces';font-weight:700;background:linear-gradient(100deg,#fff,#9aa3b0);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px;}
+  .app-credit{text-align:center;font-size:10.5px;color:var(--muted);opacity:0.6;padding:8px 0 20px;letter-spacing:0.4px;}
+  .app-credit b{font-family:'Fraunces';font-weight:700;color:var(--accent);letter-spacing:1px;}
   .topbar-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);border-radius:20px;padding:5px 6px 5px 12px;}
   .topbar-user .uname{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .topbar-user .urole{font-size:9px;color:var(--muted);display:block;}
@@ -267,8 +271,8 @@
   <div class="login-card">
     <div class="login-brand">
       <img class="brand-logo hidden" id="loginLogoImg">
-      <div class="brand-logo" id="loginLogoPh">OM</div>
-      <div class="lname">EGRÉGORA</div>
+      <div class="brand-logo" id="loginLogoPh">EG</div>
+      <div class="lname">Egrégora</div>
       <div class="lsub">Agenda de Eventos</div>
     </div>
     <div class="login-error" id="loginError">Usuário ou senha incorretos.</div>
@@ -276,6 +280,7 @@
     <div class="field"><label>Senha</label><input id="login_password" type="password" autocomplete="current-password" placeholder="Sua senha"></div>
     <button class="btn full" id="loginBtn" style="margin-top:8px;">Entrar</button>
     <div class="login-hint">Primeiro acesso? Use <b>admin</b> / <b>admin</b><br>e depois mude a senha em 👥 Usuários.</div>
+    <div class="credit-mg">criado por <b>MG</b></div>
   </div>
 </div>
 
@@ -283,8 +288,8 @@
   <div class="sign-wrap">
     <div class="sign-card">
       <div class="sign-brand">
-        <div class="brand-logo">OM</div>
-        <div class="brand-text"><div class="name" style="font-size:14px;">EGRÉGORA</div></div>
+        <div class="brand-logo">EG</div>
+        <div class="brand-text"><div class="name" style="font-size:14px;">Egrégora</div></div>
       </div>
       <div id="signBody"></div>
     </div>
@@ -296,9 +301,9 @@
 <div class="topbar">
   <div class="topbar-left" id="logoUploadTrigger" title="Toque para trocar a logo">
     <img class="brand-logo hidden" id="brandLogoImg">
-    <div class="brand-logo" id="brandLogoPh">OM</div>
+    <div class="brand-logo" id="brandLogoPh">EG</div>
     <input type="file" id="brandLogoFile" accept="image/*" style="display:none;">
-    <div class="brand-text"><div class="name">EGRÉGORA</div></div>
+    <div class="brand-text"><div class="name">Egrégora</div></div>
   </div>
   <div class="artist-switcher" id="artistSwitcher">
     <button id="artistSwitchBtn">Todos os artistas <span class="chev">▾</span></button>
@@ -316,7 +321,7 @@
   <div class="view active" id="view-agenda">
     <div class="card">
       <div class="cal-header">
-        <div class="card-title" style="margin:0;">EGRÉGORA</div>
+        <div class="card-title" style="margin:0;">Egrégora</div>
         <div class="cal-nav"><button id="prevMonth">‹</button><span class="cal-month" id="calMonthLabel"></span><button id="nextMonth">›</button></div>
       </div>
       <div class="cal-grid" id="calDow"></div>
@@ -456,6 +461,8 @@
       <button class="btn secondary full" id="exportContactsBtn">⬇ Exportar contatos (.csv)</button>
     </div>
   </div>
+
+  <div class="app-credit">Egrégora · criado por <b>MG</b></div>
 
 </div>
 
