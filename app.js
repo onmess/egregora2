@@ -1425,14 +1425,9 @@ document.getElementById('finWhatsappBtn').addEventListener('click', ()=>{
 });
 
 /* ---------- INICIALIZAÇÃO ---------- */
-const sessionUserId = store.get('sessionUserId', null);
-const sessionUser = sessionUserId ? users.find(u=>u.id===sessionUserId) : null;
-if(sessionUser){
-  applyLoggedUser(sessionUser.id);
-} else {
-  applyLoggedUser(currentUserId); // prepara os renders internamente
-  showLoginScreen();              // mas bloqueia o app com a tela de login
-}
+// O login SEMPRE aparece ao abrir o app (não guarda sessão entre visitas).
+applyLoggedUser(currentUserId); // prepara os renders internamente
+showLoginScreen();              // bloqueia com a tela de login
 
 /* URL para assinatura pública (signing mode) */
 const params = new URLSearchParams(location.search);

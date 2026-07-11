@@ -1,4 +1,4 @@
-# OnMess — Agenda de Eventos
+# OnMess — Agenda de Eventos Profissional
 
 Aplicativo completo para gestão de eventos, artistas, músicas, contratos digitais e relatórios financeiros com prestação de contas.
 
@@ -39,6 +39,13 @@ Aplicativo completo para gestão de eventos, artistas, músicas, contratos digit
 - Base de dados automática de contatos (contratantes + fornecedores)
 - Busca e filtro por tipo
 - Exportação CSV
+
+### 🙈 Desativar / Excluir Artistas e Músicas (NOVO)
+- Abra o artista ou a música → botões **"🙈 Desativar"** e **"🗑 Excluir"**
+- **Desativar** = oculta das listas e dos seletores, sem apagar nada (dá para reativar quando quiser)
+- **Excluir** = apaga definitivamente (pede confirmação dupla)
+- Artistas desativados não recebem novos eventos/músicas, mas o histórico é mantido
+- Botão "🙈 ver desativados" nas abas Artistas e Músicas mostra os itens ocultos
 
 ### 💼 Vendedores (NOVO)
 - Cadastre vendedores na aba **👥 Usuários** marcando "É vendedor"
