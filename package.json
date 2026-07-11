@@ -1,5 +1,5 @@
 {
-  "name": "onmess",
+  "name": "egrégora",
   "version": "1.0.0",
   "description": "Gestão completa de eventos, artistas, contratos e finanças",
   "main": "index.html",
@@ -18,11 +18,11 @@
     "pwa",
     "offline"
   ],
-  "author": "OnMess",
+  "author": "Egregora",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/seu-usuario/onmess"
+    "url": "https://github.com/seu-usuario/egregora"
   },
   "engines": {
     "node": "14.0.0",
