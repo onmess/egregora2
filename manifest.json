@@ -1,6 +1,6 @@
 {
-  "name": "OnMess — Agenda de Eventos",
-  "short_name": "OnMess",
+  "name": "EGRÉGORA — Agenda de Eventos",
+  "short_name": "EGRÉGORA",
   "description": "Gestão completa de eventos, artistas, contratos e finanças",
   "start_url": "./index.html",
   "scope": "./",
@@ -25,7 +25,7 @@
   "categories": ["business", "productivity"],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%230c0d0f' width='540' height='720'/><text x='270' y='360' font-family='Fraunces' font-size='120' font-weight='700' fill='%23c3c9d1' text-anchor='middle' dominant-baseline='central'>OnMess</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%230c0d0f' width='540' height='720'/><text x='270' y='360' font-family='Fraunces' font-size='120' font-weight='700' fill='%23c3c9d1' text-anchor='middle' dominant-baseline='central'>EGRÉGORA</text></svg>",
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow"
