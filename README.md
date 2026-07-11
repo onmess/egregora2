@@ -1,4 +1,4 @@
-# OnMess — Agenda de Eventos Profissional
+# OnMess — Agenda de Eventos
 
 Aplicativo completo para gestão de eventos, artistas, músicas, contratos digitais e relatórios financeiros com prestação de contas.
 
