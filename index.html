@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title> ONMESS — EGRÉGORA </title>
+<title>OnMess — Agenda de Eventos</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
   :root{
@@ -108,6 +108,8 @@
   .badge.assinado{background:var(--success-soft);color:var(--success);}
   .badge.pendente{background:var(--warning-soft);color:var(--warning);}
   .badge.tipo{background:var(--bg);color:var(--muted);}
+  .badge.desativado{background:var(--danger-soft);color:var(--danger);}
+  .archived-item{opacity:0.5;filter:grayscale(0.6);}
   .badge.receita{background:var(--success-soft);color:var(--success);}
   .badge.despesa{background:var(--danger-soft);color:var(--danger);}
   .empty-note{font-size:12.5px;color:var(--muted);border:1.5px dashed var(--border);border-radius:14px;padding:22px;text-align:center;}
@@ -345,7 +347,7 @@
   <!-- ARTISTAS -->
   <div class="view" id="view-artistas">
     <div class="card">
-      <div class="card-title">ARTISTAS</div>
+      <div class="card-title">ARTISTAS <button class="file-btn" id="toggleArchivedArtists" style="font-style:normal;">🙈 ver desativados</button></div>
       <div id="artistList"></div>
       <button class="btn secondary full" id="newArtistBtn">+ Novo artista</button>
     </div>
@@ -354,7 +356,7 @@
   <!-- MÚSICAS -->
   <div class="view" id="view-musicas">
     <div class="card">
-      <div class="card-title">MÚSICAS</div>
+      <div class="card-title">MÚSICAS <button class="file-btn" id="toggleArchivedTracks" style="font-style:normal;">🙈 ver desativadas</button></div>
       <div id="trackList"></div>
       <button class="btn secondary full" id="newTrackBtn">+ Nova música</button>
     </div>
@@ -646,6 +648,8 @@
     </div>
 
     <div class="modal-actions">
+      <button class="btn ghost" id="archiveArtistBtn" style="display:none;">🙈 Desativar</button>
+      <button class="btn danger" id="deleteArtistBtn" style="display:none;">🗑 Excluir</button>
       <button class="btn ghost" id="cancelArtistModal">Cancelar</button>
       <button class="btn" id="saveArtistBtn">Salvar</button>
     </div>
@@ -678,6 +682,8 @@
       <button class="btn small" id="addContribBtn" type="button" style="flex:0 0 auto;">+</button>
     </div>
     <div class="modal-actions">
+      <button class="btn ghost" id="archiveTrackBtn" style="display:none;">🙈 Desativar</button>
+      <button class="btn danger" id="deleteTrackBtn" style="display:none;">🗑 Excluir</button>
       <button class="btn ghost" id="cancelTrackModal">Cancelar</button>
       <button class="btn" id="saveTrackBtn">Salvar</button>
     </div>
