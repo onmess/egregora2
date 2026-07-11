@@ -1,0 +1,36 @@
+{
+  "name": "onmess",
+  "version": "1.0.0",
+  "description": "Gestão completa de eventos, artistas, contratos e finanças",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx serve",
+    "build": "echo 'Nenhum build necessário - app é puro HTML/CSS/JS'"
+  },
+  "keywords": [
+    "eventos",
+    "agenda",
+    "artistas",
+    "contratos",
+    "finanças",
+    "pwa",
+    "offline"
+  ],
+  "author": "OnMess",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seu-usuario/onmess"
+  },
+  "engines": {
+    "node": "14.0.0",
+    "npm": "6.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {},
+  "browser": {
+    "./app.js": "./app.js"
+  }
+}

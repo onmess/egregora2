@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c0d0f">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>OnMess — Agenda de Eventos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root{
+    --bg:#0c0d0f; --surface:#17181c; --text:#eef0f3; --ink:#08090a; --muted:#8b92a0;
+    --accent:#c3c9d1; --accent-soft:rgba(195,201,209,0.14);
+    --success:#3add9a; --success-soft:rgba(58,221,154,0.14);
+    --warning:#ffb238; --warning-soft:rgba(255,178,56,0.16);
+    --danger:#ff5c6c; --danger-soft:rgba(255,92,108,0.15);
+    --purple:#7fa3c9; --border:rgba(255,255,255,0.10);
+  }
+  html{color-scheme:dark;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:80px;
+    background-image:
+      radial-gradient(circle at 12% 0%, rgba(255,255,255,0.07) 0, transparent 42%),
+      radial-gradient(circle at 88% 8%, rgba(150,165,185,0.10) 0, transparent 38%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-attachment:fixed;
+  }
+  h1,h2,.display{font-family:'Fraunces',serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .hidden{display:none !important;}
+
+  .banner{background:linear-gradient(90deg,#3a3c42,#1c1d21);color:#eef0f3;font-size:11.5px;text-align:center;padding:8px 14px;font-weight:600;letter-spacing:0.2px;}
+
+  .topbar{
+    background:linear-gradient(160deg,#1c1d21,var(--ink) 70%);color:#fff;padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;gap:10px;flex-wrap:wrap;
+    border-bottom:1px solid rgba(255,255,255,0.12);
+  }
+  .topbar-left{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .brand-logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#f2f3f5,#9aa3b0 45%,#5c626e);display:flex;align-items:center;justify-content:center;font-family:'Fraunces';font-weight:700;font-size:14px;object-fit:cover;color:#101114;box-shadow:0 1px 0 rgba(255,255,255,0.5) inset, 0 4px 12px rgba(0,0,0,0.5);}
+  .brand-text .name{font-family:'Fraunces';font-weight:700;font-size:15.5px;letter-spacing:0.5px;background:linear-gradient(100deg,#fff 0%,#9aa3b0 25%,#fff 50%,#9aa3b0 75%,#fff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .role-switch{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.08);border-radius:20px;padding:3px;}
+  #loginAsSelect{background:transparent;border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;text-transform:uppercase;letter-spacing:0.3px;width:auto;max-width:160px;}
+  #loginAsSelect option{color:#101114;}
+  .artist-switcher{position:relative;order:3;flex:1;display:flex;justify-content:center;min-width:140px;}
+  #artistSwitchBtn{background:rgba(255,255,255,0.08);border:none;color:#fff;font-size:12px;font-weight:600;padding:8px 14px;border-radius:20px;cursor:pointer;font-family:'Fraunces';max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #artistSwitchBtn .chev{opacity:0.6;}
+  .artist-switch-menu{position:absolute;top:38px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,0.55);padding:6px;z-index:40;min-width:200px;}
+  .artist-switch-menu button{width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:9px;font-size:13px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;}
+  .artist-switch-menu button:hover{background:var(--bg);}
+  .artist-switch-menu .thumb-mini{width:20px;height:20px;border-radius:6px;object-fit:cover;background:var(--accent-soft);flex-shrink:0;}
+  @media(max-width:520px){ .topbar{justify-content:space-between;} .artist-switcher{order:10;flex-basis:100%;} }
+
+  .wrap{max-width:640px;margin:0 auto;padding:16px;}
+
+  .bottomnav{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,#1c1d21,var(--ink));border-top:1px solid rgba(255,255,255,0.14);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:30;}
+  .navbtn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;color:var(--muted);cursor:pointer;padding:4px 4px;border-radius:10px;flex:1;}
+  .navbtn .ic{font-size:17px;}
+  .navbtn.active{color:var(--accent);text-shadow:0 0 10px rgba(255,255,255,0.45);}
+  .view{display:none;} .view.active{display:block;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 10px 30px rgba(0,0,0,0.35);position:relative;}
+  .card-title{font-family:'Fraunces';font-style:italic;font-weight:600;font-size:18px;margin:0 0 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:relative;padding-left:15px;}
+  .card-title::before{content:'';position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  .section-label{font-family:'Fraunces';font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin:18px 0 8px;}
+
+  .btn{font-family:'Inter';font-weight:700;font-size:13px;background:linear-gradient(135deg,#f4f5f7,#c3c9d1 45%,#8b92a0);color:#101114;border:none;padding:11px 18px;border-radius:30px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;letter-spacing:0.2px;box-shadow:0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 14px rgba(0,0,0,0.4);}
+  .btn.secondary{background:var(--accent-soft);color:var(--accent);}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border);}
+  .btn.danger{background:var(--danger-soft);color:var(--danger);}
+  .role-options{display:flex;flex-direction:column;gap:8px;}
+  .role-options label{border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;display:block;cursor:pointer;font-size:13px;font-weight:600;}
+  .role-options input{width:auto;margin-right:8px;}
+  .role-options .role-desc{font-weight:400;font-size:11px;color:var(--muted);margin-top:2px;margin-left:22px;}
+  .artist-access-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:13px;}
+  .artist-access-row .aname{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .artist-access-row select{width:auto;flex:0 0 130px;font-size:12px;padding:7px 9px;}
+  .user-item{display:flex;align-items:center;gap:12px;}
+  .user-avatar{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Fraunces';font-weight:700;flex-shrink:0;}
+  .btn.small{padding:7px 12px;font-size:12px;border-radius:9px;}
+  .btn.full{width:100%;justify-content:center;}
+  .btn.whatsapp{background:#1faa6d;color:#fff;}
+  .btn.email{background:#3a6ea8;color:#fff;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .fab{position:fixed;bottom:78px;right:18px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#f4f5f7,#c3c9d1 45%,#8b92a0);color:#101114;border:none;font-size:24px;box-shadow:0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 20px rgba(0,0,0,0.5);cursor:pointer;z-index:25;}
+
+  input, select, textarea{font-family:'Inter';font-size:14px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);width:100%;}
+  input::placeholder, textarea::placeholder{color:var(--muted);opacity:0.7;}
+  select{color-scheme:dark;}
+  input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent);}
+  input:disabled, select:disabled, textarea:disabled{background:var(--bg);color:var(--muted);}
+  label{font-family:'Inter';font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);display:block;margin-bottom:5px;}
+  .field{margin-bottom:12px;}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+  .filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .filters select{width:auto;flex:1;min-width:110px;font-size:12px;padding:8px 10px;}
+
+  .badge{font-family:'Inter';font-weight:600;font-size:10px;padding:3px 9px;border-radius:20px;display:inline-block;}
+  .badge.confirmado{background:var(--success-soft);color:var(--success);}
+  .badge.reserva{background:var(--warning-soft);color:var(--warning);}
+  .badge.imprensa{background:rgba(53,208,208,0.16);color:var(--purple);}
+  .badge.tramite{background:var(--accent-soft);color:var(--accent);}
+  .badge.assinado{background:var(--success-soft);color:var(--success);}
+  .badge.pendente{background:var(--warning-soft);color:var(--warning);}
+  .badge.tipo{background:var(--bg);color:var(--muted);}
+  .badge.receita{background:var(--success-soft);color:var(--success);}
+  .badge.despesa{background:var(--danger-soft);color:var(--danger);}
+  .empty-note{font-size:12.5px;color:var(--muted);border:1.5px dashed var(--border);border-radius:14px;padding:22px;text-align:center;}
+
+  .cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .cal-nav{display:flex;gap:6px;align-items:center;}
+  .cal-nav button{background:var(--accent-soft);color:var(--accent);border:none;border-radius:8px;cursor:pointer;padding:5px 10px;font-weight:700;}
+  .cal-month{font-family:'Fraunces';font-weight:700;font-size:14px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-dow{font-size:9px;text-align:center;color:var(--muted);padding:4px 0;font-weight:600;}
+  .cal-day{min-height:52px;border-radius:9px;padding:4px;font-size:10px;cursor:pointer;background:var(--bg);}
+  .cal-day.empty{background:none;cursor:default;}
+  .cal-day.today{outline:2px solid var(--accent);}
+  .cal-day .num{font-family:'JetBrains Mono';font-weight:700;}
+  .show-dot{margin-top:2px;color:#fff;font-size:8px;padding:2px 4px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dot-confirmado{background:var(--success);} .dot-reserva{background:var(--warning);} .dot-imprensa{background:var(--purple);} .dot-tramite{background:var(--accent);color:#101114;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .agenda-subnav{display:flex;gap:8px;margin-bottom:14px;}
+  .subnavbtn{flex:1;font-family:'Inter';font-weight:700;font-size:12.5px;padding:12px 10px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .subnavbtn.active{background:linear-gradient(135deg,#f4f5f7,#c3c9d1 45%,#8b92a0);color:#101114;border-color:transparent;}
+  .subview-agenda{display:none;}
+  .subview-agenda.active{display:block;}
+  .stat{background:var(--bg);border-radius:12px;padding:12px;text-align:center;}
+  .stat .num{font-family:'Fraunces';font-weight:800;font-size:15px;}
+  .stat .label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-top:2px;}
+
+  .list-row{border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;}
+  .list-row .thumb{width:40px;height:40px;border-radius:10px;object-fit:cover;background:var(--accent-soft);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Fraunces';font-weight:700;color:var(--accent);}
+  .list-row .body{flex:1;min-width:0;}
+  .list-row .title-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:'Fraunces';font-weight:700;font-size:14.5px;}
+  .list-row .meta{font-size:12px;color:var(--muted);margin-top:3px;}
+  .list-row .actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+  .list-row .actions button{background:none;border:none;font-size:11px;font-weight:600;cursor:pointer;color:var(--accent);}
+  .list-row .actions button.del{color:var(--danger);}
+
+  .artist-card{border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:10px;cursor:pointer;}
+  .artist-card .logo{width:54px;height:54px;border-radius:14px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-family:'Fraunces';font-weight:800;font-size:20px;color:var(--accent);flex-shrink:0;object-fit:cover;}
+  .artist-card .info .name{font-family:'Fraunces';font-weight:700;font-size:15px;}
+  .artist-card .info .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .social-row{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .social-chip{font-size:10.5px;background:var(--bg);padding:3px 8px;border-radius:20px;color:var(--muted);}
+
+  .contrib-row, .checklist-row{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:9px 10px;margin-bottom:8px;flex-wrap:wrap;}
+  .contrib-row .name{font-weight:600;font-size:13px;flex:1;min-width:100px;}
+  .contrib-row .role{font-size:11px;color:var(--muted);}
+  .checklist-row input[type=checkbox]{width:auto;}
+  .checklist-row span.txt{flex:1;font-size:13px;}
+  .checklist-row span.txt.done{text-decoration:line-through;opacity:0.5;}
+
+  .payment-row{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:9px 10px;margin-bottom:8px;flex-wrap:wrap;}
+  .payment-row .pdate{font-family:'JetBrains Mono';font-size:11.5px;color:var(--muted);flex:0 0 76px;}
+  .payment-row .pvalue{font-weight:700;font-size:13px;flex:1;min-width:90px;}
+  .payment-row .ppct{font-family:'JetBrains Mono';font-size:11px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;}
+  .payment-row .receipt-btn{font-size:10.5px;background:none;border:none;color:var(--accent);cursor:pointer;font-weight:600;}
+  .payment-row .receipt-chip{font-size:10px;background:var(--success-soft);color:var(--success);padding:3px 7px;border-radius:8px;text-decoration:none;}
+  .payment-row .rmpay{background:none;border:none;color:var(--danger);cursor:pointer;}
+
+  /* finanças */
+  .fin-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .fin-summary .stat .num.pos{color:var(--success);}
+  .fin-summary .stat .num.neg{color:var(--danger);}
+  .expense-row{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:9px 10px;margin-bottom:8px;flex-wrap:wrap;}
+  .expense-row .edate{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);flex:0 0 72px;}
+  .expense-row .edesc{flex:1;min-width:110px;font-size:12.5px;font-weight:600;}
+  .expense-row .ecat{font-size:10px;background:var(--bg);color:var(--muted);padding:2px 8px;border-radius:20px;}
+  .expense-row .evalue{font-family:'JetBrains Mono';font-size:12px;font-weight:700;}
+  .expense-row .evalue.receita{color:var(--success);}
+  .expense-row .evalue.despesa{color:var(--danger);}
+  .expense-row .rmexp{background:none;border:none;color:var(--danger);cursor:pointer;}
+  .expense-row .receipt-chip{font-size:10px;background:var(--success-soft);color:var(--success);padding:3px 7px;border-radius:8px;text-decoration:none;}
+  .expense-row .receipt-btn{font-size:10.5px;background:none;border:none;color:var(--accent);cursor:pointer;font-weight:600;}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,15,20,0.55);display:none;align-items:flex-end;justify-content:center;z-index:60;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--surface);border-radius:20px 20px 0 0;max-width:560px;width:100%;max-height:92vh;overflow:auto;padding:20px 18px calc(20px + env(safe-area-inset-bottom));}
+  @media(min-width:640px){ .modal-bg{align-items:center;} .modal{border-radius:20px;} }
+  .modal-handle{width:64px;height:4px;background:repeating-linear-gradient(90deg,var(--accent) 0 6px,transparent 6px 11px);border-radius:4px;margin:0 auto 16px;opacity:0.85;}
+  .modal h2{font-size:19px;margin:0 0 16px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap;}
+
+  .contract-box{font-family:'JetBrains Mono';font-size:11.5px;line-height:1.6;white-space:pre-wrap;background:var(--bg);border-radius:12px;padding:14px;max-height:280px;overflow:auto;}
+  .contract-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
+  .signed-box{border:1.5px solid var(--success);background:var(--success-soft);border-radius:14px;padding:14px;margin-top:10px;}
+  .signed-box .who{font-family:'Fraunces';font-weight:700;font-size:13.5px;color:var(--success);}
+  .signed-box .when{font-size:11px;color:var(--muted);margin-top:2px;}
+  .signed-box img{margin-top:8px;max-width:220px;border:1px solid var(--border);border-radius:8px;background:#fff;}
+
+  .sig-pad-wrap{border:1.5px dashed var(--border);border-radius:14px;padding:10px;background:#fff;}
+  #sigCanvas, #ssCanvas{width:100%;height:150px;touch-action:none;display:block;border-radius:8px;background:#fff;}
+  .sig-actions{display:flex;gap:8px;margin-top:8px;}
+
+  .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:12.5px;z-index:80;display:none;max-width:88vw;text-align:center;}
+  .toast.show{display:block;}
+
+  body.signing-mode .banner, body.signing-mode .topbar, body.signing-mode .wrap, body.signing-mode .bottomnav, body.signing-mode .fab{display:none !important;}
+  #signScreen{display:none;}
+  body.signing-mode #signScreen{display:block;min-height:100vh;padding:24px 16px 60px;}
+
+  /* TELA DE LOGIN */
+  #loginScreen{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px;
+    background-image:radial-gradient(circle at 12% 0%, rgba(255,255,255,0.07) 0, transparent 42%),radial-gradient(circle at 88% 8%, rgba(150,165,185,0.10) 0, transparent 38%);}
+  body.locked #loginScreen{display:flex;}
+  body.locked .banner, body.locked .topbar, body.locked .wrap, body.locked .bottomnav, body.locked .fab{display:none !important;}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:32px 26px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.5);}
+  .login-brand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;}
+  .login-brand .brand-logo{width:64px;height:64px;border-radius:16px;font-size:26px;}
+  .login-brand .lname{font-family:'Fraunces';font-weight:700;font-size:22px;background:linear-gradient(100deg,#fff 0%,#9aa3b0 50%,#fff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .login-brand .lsub{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+  .login-error{font-size:12px;color:var(--danger);background:var(--danger-soft);border-radius:10px;padding:9px 12px;margin-bottom:12px;display:none;text-align:center;}
+  .login-error.show{display:block;}
+  .login-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6;}
+  .topbar-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);border-radius:20px;padding:5px 6px 5px 12px;}
+  .topbar-user .uname{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .topbar-user .urole{font-size:9px;color:var(--muted);display:block;}
+  #logoutBtn{background:var(--danger-soft);color:var(--danger);border:none;border-radius:16px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;}
+  .sign-wrap{max-width:520px;margin:0 auto;}
+  .sign-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px 20px;box-shadow:0 20px 50px rgba(0,0,0,0.5);}
+  .sign-brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .sign-summary{background:var(--bg);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.7;}
+  .sign-summary b{font-family:'Fraunces';font-style:italic;}
+  .sign-locked-note{font-size:11px;color:var(--muted);background:var(--accent-soft);padding:8px 12px;border-radius:10px;margin-bottom:16px;line-height:1.6;}
+  .sign-success{text-align:center;padding:30px 10px;}
+  .sign-success .icon{font-size:40px;}
+  .sign-success h2{margin:10px 0 6px;}
+
+  .value-mask{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-family:'JetBrains Mono';}
+  .value-mask.locked{cursor:not-allowed;opacity:0.7;}
+  .value-mask .eye{font-size:11px;}
+
+  .upload-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
+  .upload-row .preview{width:48px;height:48px;border-radius:10px;object-fit:cover;background:var(--bg);}
+  .file-btn{font-size:11.5px;background:var(--accent-soft);color:var(--accent);border:none;border-radius:9px;padding:8px 12px;cursor:pointer;font-weight:600;}
+  .photo-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .photo-grid .ph{position:relative;}
+  .photo-grid img{width:56px;height:56px;border-radius:10px;object-fit:cover;display:block;}
+  .photo-grid .rmph{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:1;cursor:pointer;}
+  .rider-chip{font-size:11.5px;background:var(--success-soft);color:var(--success);padding:6px 10px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;}
+
+  /* seleção de itens do press kit para envio */
+  .pk-select-list{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+  .pk-select-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12.5px;}
+  .pk-select-row input{width:auto;}
+  .pk-select-row .pkname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<div class="banner">🧪 Modo de demonstração — dados salvos só neste dispositivo (sem nuvem ainda)</div>
+
+<!-- TELA PÚBLICA DE ASSINATURA -->
+<!-- TELA DE LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">
+      <img class="brand-logo hidden" id="loginLogoImg">
+      <div class="brand-logo" id="loginLogoPh">OM</div>
+      <div class="lname">OnMess</div>
+      <div class="lsub">Agenda de Eventos</div>
+    </div>
+    <div class="login-error" id="loginError">Usuário ou senha incorretos.</div>
+    <div class="field"><label>Usuário</label><input id="login_username" autocomplete="username" placeholder="Seu usuário"></div>
+    <div class="field"><label>Senha</label><input id="login_password" type="password" autocomplete="current-password" placeholder="Sua senha"></div>
+    <button class="btn full" id="loginBtn" style="margin-top:8px;">Entrar</button>
+    <div class="login-hint">Primeiro acesso? Use <b>admin</b> / <b>admin</b><br>e depois mude a senha em 👥 Usuários.</div>
+  </div>
+</div>
+
+<div id="signScreen">
+  <div class="sign-wrap">
+    <div class="sign-card">
+      <div class="sign-brand">
+        <div class="brand-logo">OM</div>
+        <div class="brand-text"><div class="name" style="font-size:14px;">OnMess</div></div>
+      </div>
+      <div id="signBody"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="topbar">
+  <div class="topbar-left" id="logoUploadTrigger" title="Toque para trocar a logo">
+    <img class="brand-logo hidden" id="brandLogoImg">
+    <div class="brand-logo" id="brandLogoPh">OM</div>
+    <input type="file" id="brandLogoFile" accept="image/*" style="display:none;">
+    <div class="brand-text"><div class="name">OnMess</div></div>
+  </div>
+  <div class="artist-switcher" id="artistSwitcher">
+    <button id="artistSwitchBtn">Todos os artistas <span class="chev">▾</span></button>
+    <div class="artist-switch-menu hidden" id="artistSwitchMenu"></div>
+  </div>
+  <div class="topbar-user" id="loggedUserWrap">
+    <div><span class="uname" id="loggedUserName">—</span><span class="urole" id="loggedUserRole"></span></div>
+    <button id="logoutBtn" title="Sair">Sair</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- AGENDA -->
+  <div class="view active" id="view-agenda">
+    <div class="card">
+      <div class="cal-header">
+        <div class="card-title" style="margin:0;">OnMess</div>
+        <div class="cal-nav"><button id="prevMonth">‹</button><span class="cal-month" id="calMonthLabel"></span><button id="nextMonth">›</button></div>
+      </div>
+      <div class="cal-grid" id="calDow"></div>
+      <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
+    </div>
+    <div class="card"><div class="stats-grid" id="statsGrid"></div></div>
+
+    <div class="agenda-subnav">
+      <button class="subnavbtn active" id="subnavEventos" data-sub="eventos">📋 Eventos &amp; shows</button>
+      <button class="subnavbtn" id="subnavContratos" data-sub="contratos">📄 Contratos</button>
+    </div>
+
+    <div class="subview-agenda active" id="sub-eventos">
+      <div class="card">
+        <div class="card-title">Eventos &amp; shows</div>
+        <div id="showList"></div>
+      </div>
+    </div>
+
+    <div class="subview-agenda" id="sub-contratos">
+      <div class="card">
+        <div class="card-title">Contrato</div>
+        <div id="contractArea"><div class="empty-note">Toque em "contrato" num evento (em Eventos &amp; shows) para gerar aqui.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARTISTAS -->
+  <div class="view" id="view-artistas">
+    <div class="card">
+      <div class="card-title">ARTISTAS</div>
+      <div id="artistList"></div>
+      <button class="btn secondary full" id="newArtistBtn">+ Novo artista</button>
+    </div>
+  </div>
+
+  <!-- MÚSICAS -->
+  <div class="view" id="view-musicas">
+    <div class="card">
+      <div class="card-title">MÚSICAS</div>
+      <div id="trackList"></div>
+      <button class="btn secondary full" id="newTrackBtn">+ Nova música</button>
+    </div>
+  </div>
+
+  <!-- FINANÇAS -->
+  <div class="view" id="view-financas">
+    <div class="card">
+      <div class="card-title">RELATÓRIO FINANCEIRO <span style="font-family:'Inter';font-style:normal;font-weight:400;font-size:11px;color:var(--muted);" id="finArtistLabel"></span></div>
+      <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:0;">Prestação de contas do artista: receitas entram automaticamente das parcelas pagas dos eventos; despesas você lança aqui com recibo anexado. Use o seletor de artista no topo para filtrar.</p>
+      <div class="filters">
+        <select id="finCurrencyFilter">
+          <option value="EUR">EUR (€)</option>
+          <option value="USD">USD ($)</option>
+          <option value="AOA">AOA (Kz)</option>
+        </select>
+        <select id="finPeriodFilter">
+          <option value="all">Todo o período</option>
+          <option value="month">Este mês</option>
+          <option value="year">Este ano</option>
+        </select>
+      </div>
+      <div class="fin-summary" id="finSummary"></div>
+      <div class="section-label">Lançamentos</div>
+      <div id="finList"></div>
+      <div class="contract-actions">
+        <button class="btn small secondary" id="finExportBtn">⬇ Exportar (.csv)</button>
+        <button class="btn small whatsapp" id="finWhatsappBtn">Enviar relatório</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Nova despesa / receita</div>
+      <div class="field-row">
+        <div class="field" style="flex:0 0 120px;"><label>Tipo</label><select id="e_type"><option value="despesa">Despesa</option><option value="receita">Receita</option></select></div>
+        <div class="field"><label>Artista</label><select id="e_artist"></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="flex:0 0 130px;"><label>Data</label><input type="date" id="e_date"></div>
+        <div class="field"><label>Categoria</label>
+          <select id="e_category">
+            <option>Transporte</option><option>Hotel</option><option>Alimentação</option><option>Som / Luz</option>
+            <option>Equipe / staff</option><option>Marketing / divulgação</option><option>Estúdio / produção</option>
+            <option>Figurino</option><option>Comissão</option><option>Cachê recebido</option><option>Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Descrição</label><input id="e_desc" placeholder="Ex: Voo Lisboa → Luanda, combustível, diária hotel..."></div>
+      <div class="field-row">
+        <div class="field" style="flex:0 0 110px;"><label>Moeda</label><select id="e_currency"><option value="EUR">EUR (€)</option><option value="USD">USD ($)</option><option value="AOA">AOA (Kz)</option></select></div>
+        <div class="field"><label>Valor</label><input id="e_value" placeholder="Ex: 250,00"></div>
+      </div>
+      <div class="field">
+        <label>Recibo / comprovativo</label>
+        <div class="upload-row">
+          <img class="preview" id="expReceiptPreview" style="display:none;">
+          <button class="file-btn" type="button" id="expReceiptBtn">📎 Anexar recibo</button>
+          <span id="expReceiptChip"></span>
+        </div>
+        <input type="file" id="expReceiptFile" accept="image/*,application/pdf" style="display:none;">
+      </div>
+      <button class="btn full" id="addExpenseBtn">+ Adicionar lançamento</button>
+    </div>
+  </div>
+
+  <!-- FORNECEDORES -->
+  <div class="view" id="view-fornecedores">
+    <div class="card">
+      <div class="card-title">FORNECEDORES</div>
+      <div id="supplierList"></div>
+      <button class="btn secondary full" id="newSupplierBtn">+ Novo fornecedor</button>
+    </div>
+  </div>
+
+  <!-- USUÁRIOS -->
+  <div class="view" id="view-equipe">
+    <div class="card">
+      <div class="card-title">USUÁRIOS</div>
+      <div id="usersList"></div>
+      <button class="btn secondary full" id="newUserBtn">+ Novo usuário</button>
+    </div>
+  </div>
+
+  <!-- CONTATOS -->
+  <div class="view" id="view-contatos">
+    <div class="card">
+      <div class="card-title">CONTATOS <span style="font-family:'Inter';font-style:normal;font-weight:400;font-size:11px;color:var(--muted);">base de dados automática</span></div>
+      <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:0;">Montada automaticamente a partir dos contratantes dos eventos e dos fornecedores cadastrados. Sempre atualizada — não precisa cadastrar nada aqui.</p>
+      <div class="filters">
+        <select id="filterContactType">
+          <option value="">Todos</option>
+          <option value="contratante">Contratantes</option>
+          <option value="fornecedor">Fornecedores</option>
+        </select>
+        <input id="searchContact" placeholder="Buscar por nome ou e-mail" style="flex:2;min-width:140px;font-size:12px;padding:8px 10px;">
+      </div>
+      <div id="contactsList"></div>
+      <button class="btn secondary full" id="exportContactsBtn">⬇ Exportar contatos (.csv)</button>
+    </div>
+  </div>
+
+</div>
+
+<button class="fab" id="fabNewShow" title="Novo evento">+</button>
+
+<div class="bottomnav">
+  <button class="navbtn active" data-tab="agenda"><span class="ic">📅</span>Agenda</button>
+  <button class="navbtn" data-tab="artistas"><span class="ic">🎤</span>Artistas</button>
+  <button class="navbtn" data-tab="musicas"><span class="ic">🎵</span>Músicas</button>
+  <button class="navbtn" data-tab="financas"><span class="ic">💰</span>Finanças</button>
+  <button class="navbtn" data-tab="fornecedores"><span class="ic">🧰</span>Fornec.</button>
+  <button class="navbtn" data-tab="contatos"><span class="ic">📇</span>Contatos</button>
+  <button class="navbtn" data-tab="equipe"><span class="ic">👥</span>Usuários</button>
+</div>
+
+<!-- SHOW MODAL -->
+<div class="modal-bg" id="showModalBg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="showModalTitle">Novo evento</h2>
+    <div class="field-row">
+      <div class="field"><label>Artista</label><select id="f_artist"></select></div>
+      <div class="field"><label>Tipo de evento</label>
+        <select id="f_eventtype">
+          <option>Show musical</option><option>Evento corporativo</option><option>Festa / Aniversário</option>
+          <option>Casamento</option><option>Lançamento de produto</option><option>Festival</option><option>Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Data</label><input type="date" id="f_date"></div>
+      <div class="field"><label>Hora do show</label><input type="time" id="f_time"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Hora chegada</label><input type="time" id="f_arrival"></div>
+      <div class="field"><label>Hora soundcheck</label><input type="time" id="f_soundcheck"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Local</label><input id="f_venue"></div>
+      <div class="field"><label>Cidade / País</label><input id="f_city"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Instagram do local</label><input id="f_venue_ig" placeholder="@local"></div>
+      <div class="field"><label>Facebook do local</label><input id="f_venue_fb" placeholder="/local"></div>
+    </div>
+    <div class="field-row">
+      <div class="field" style="flex:0 0 100px;"><label>Moeda</label><select id="f_currency"><option value="EUR">EUR (€)</option><option value="USD">USD ($)</option><option value="AOA">AOA (Kz)</option></select></div>
+      <div class="field"><label>Valor total (cachê)</label><input id="f_value" placeholder="Ex: 3.000,00"></div>
+      <div class="field"><label>Status</label><select id="f_status"><option value="confirmado">Confirmado</option><option value="reserva">Reserva</option><option value="imprensa">Imprensa</option><option value="tramite">Trâmite</option></select></div>
+    </div>
+    <div class="field">
+      <label>Vendedor responsável (quem fechou o show)</label>
+      <select id="f_seller"><option value="">— Nenhum / não informado —</option></select>
+      <p style="font-size:10.5px;color:var(--muted);margin:5px 0 0;">Cadastre vendedores em 👥 Usuários, marcando a opção "É vendedor".</p>
+    </div>
+
+    <div class="section-label">Contratante</div>
+    <div class="field"><label>Nome da empresa / razão social</label><input id="f_hirer_name"></div>
+    <div class="field-row">
+      <div class="field"><label>Responsável da empresa</label><input id="f_hirer_rep" placeholder="Nome completo do responsável"></div>
+      <div class="field" style="flex:0 0 150px;"><label>Estado civil</label>
+        <select id="f_hirer_civil">
+          <option value="">—</option>
+          <option>Solteiro(a)</option><option>Casado(a)</option><option>Divorciado(a)</option>
+          <option>Viúvo(a)</option><option>União de facto</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Data de nascimento</label><input type="date" id="f_hirer_birth"></div>
+      <div class="field" style="flex:0 0 130px;"><label>Documento</label>
+        <select id="f_hirer_doctype">
+          <option>BI</option><option>Passaporte</option><option>NIF</option><option>Cartão de residência</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="field"><label>Nº do documento</label><input id="f_hirer_docnum"></div>
+    </div>
+    <div class="field">
+      <label>Foto do documento</label>
+      <div class="upload-row">
+        <img class="preview" id="hirerDocPreview" style="display:none;">
+        <button class="file-btn" type="button" id="hirerDocBtn">📷 Anexar foto do documento</button>
+      </div>
+      <input type="file" id="hirerDocFile" accept="image/*" style="display:none;">
+    </div>
+    <div class="field"><label>Morada da empresa</label><input id="f_hirer_company_addr" placeholder="Endereço completo da sede"></div>
+    <div class="field"><label>Morada física (residência do responsável)</label><input id="f_hirer_addr" placeholder="Endereço residencial"></div>
+    <div class="field-row">
+      <div class="field"><label>Instagram</label><input id="f_hirer_ig" placeholder="@contratante"></div>
+      <div class="field"><label>Facebook</label><input id="f_hirer_fb" placeholder="/contratante"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Telefone 1</label><input id="f_hirer_phone1"></div>
+      <div class="field"><label>Telefone 2</label><input id="f_hirer_phone2"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>E-mail 1</label><input id="f_hirer_email1" type="email"></div>
+      <div class="field"><label>E-mail 2</label><input id="f_hirer_email2" type="email"></div>
+    </div>
+
+    <div class="section-label">Checklist do evento</div>
+    <div id="checklistItems"></div>
+    <div class="field-row" style="margin-top:6px;">
+      <input id="newChecklistItem" placeholder="Adicionar item">
+      <button class="btn small" id="addChecklistItemBtn" type="button" style="flex:0 0 auto;">+</button>
+    </div>
+
+    <div class="section-label">Pagamento / parcelas</div>
+    <div id="paymentSummary" class="empty-note" style="text-align:left;padding:12px 14px;"></div>
+    <div id="paymentsList" style="margin-top:8px;"></div>
+    <div class="field-row" style="align-items:flex-end;margin-top:4px;">
+      <div class="field" style="margin-bottom:0;flex:0 0 130px;"><label>Data</label><input type="date" id="np_date"></div>
+      <div class="field" style="margin-bottom:0;"><label>Valor da parcela</label><input id="np_value" placeholder="Ex: 1.500,00"></div>
+      <button class="btn small" id="addPaymentBtn" type="button" style="flex:0 0 auto;">+ Parcela</button>
+    </div>
+
+    <div class="section-label">Observações</div>
+    <div class="field"><textarea id="f_notes" rows="3" placeholder="Qualquer observação sobre o evento, infraestrutura, condições especiais..."></textarea></div>
+
+    <input type="file" id="receiptFileInput" accept="image/*,application/pdf" style="display:none;">
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteShowBtn" style="display:none;">🗑 Excluir evento</button>
+      <button class="btn ghost" id="cancelShowModal">Cancelar</button>
+      <button class="btn" id="saveShowBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ARTIST MODAL (Press Kit + Contratos) -->
+<div class="modal-bg" id="artistModalBg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="artistModalTitle">Novo artista</h2>
+
+    <div class="upload-row">
+      <img class="preview" id="artistLogoPreview">
+      <div><input type="file" id="artistLogoFile" accept="image/*" style="display:none;"><button class="file-btn" type="button" id="artistLogoBtn">📎 Anexar logo</button></div>
+    </div>
+    <div class="field"><label>Nome artístico</label><input id="a_name"></div>
+    <div class="field-row">
+      <div class="field" style="flex:0 0 110px;"><label>Moeda</label><select id="a_currency"><option value="EUR">EUR (€)</option><option value="USD">USD ($)</option><option value="AOA">AOA (Kz)</option></select></div>
+      <div class="field"><label>Cachê padrão</label><input id="a_cache"></div>
+    </div>
+
+    <div class="section-label">Redes sociais</div>
+    <div class="field-row"><div class="field"><label>Instagram</label><input id="a_instagram" placeholder="@usuario"></div><div class="field"><label>TikTok</label><input id="a_tiktok" placeholder="@usuario"></div></div>
+    <div class="field-row"><div class="field"><label>Facebook</label><input id="a_facebook"></div><div class="field"><label>YouTube</label><input id="a_youtube"></div></div>
+    <div class="field"><label>Spotify (link)</label><input id="a_spotify"></div>
+
+    <div class="section-label">Press kit</div>
+    <div class="field"><label>Bio</label><textarea id="a_bio" rows="4" placeholder="Texto de apresentação para produtores e casas de show/evento"></textarea></div>
+    <div class="field">
+      <label>Rider técnico (PDF)</label>
+      <div class="upload-row">
+        <button class="file-btn" type="button" id="a_riderBtn">📎 Anexar PDF</button>
+        <span id="a_riderChip"></span>
+      </div>
+      <input type="file" id="a_riderFile" accept="application/pdf" style="display:none;">
+    </div>
+    <div class="field">
+      <label>Fotos</label>
+      <button class="file-btn" type="button" id="a_photosBtn">📎 Anexar fotos</button>
+      <input type="file" id="a_photosFile" accept="image/*" multiple style="display:none;">
+      <div class="photo-grid" id="a_photosGrid"></div>
+    </div>
+    <div class="field">
+      <label>Outros arquivos (one-sheet, vídeos, etc.)</label>
+      <button class="file-btn" type="button" id="a_filesBtn">📎 Anexar arquivo</button>
+      <input type="file" id="a_filesFile" multiple style="display:none;">
+      <div id="a_filesList" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <div class="section-label">Contratos do artista</div>
+    <p style="font-size:11px;color:var(--muted);margin:0 0 8px;line-height:1.6;">Guarde aqui todos os contratos do artista: gravadora, distribuição, empresariamento, eventos assinados em papel, etc.</p>
+    <div class="field">
+      <button class="file-btn" type="button" id="a_contractsBtn">📎 Anexar contrato</button>
+      <input type="file" id="a_contractsFile" accept="application/pdf,image/*" multiple style="display:none;">
+      <div id="a_contractsList" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <div class="field" style="border-top:1px dashed var(--border);padding-top:14px;">
+      <label>Enviar material do artista</label>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 4px;line-height:1.6;">Marque abaixo o que quer enviar e escolha por onde. "Compartilhar" anexa os arquivos de verdade no app que você escolher (funciona no celular). WhatsApp/E-mail abrem com o texto pronto e baixam os arquivos para você anexar, se o aparelho não suportar anexo automático.</p>
+      <div class="pk-select-list" id="pkSelectList"></div>
+      <div class="contract-actions" style="margin-top:10px;">
+        <button class="btn small whatsapp" id="pkWhatsappBtn" type="button">WhatsApp</button>
+        <button class="btn small email" id="pkEmailBtn" type="button">E-mail</button>
+        <button class="btn small" id="pkShareBtn" type="button">📤 Compartilhar</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelArtistModal">Cancelar</button>
+      <button class="btn" id="saveArtistBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRACK MODAL -->
+<div class="modal-bg" id="trackModalBg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="trackModalTitle">Nova música</h2>
+    <div class="field"><label>Artista</label><select id="t_artist"></select></div>
+    <div class="field"><label>Título</label><input id="t_title"></div>
+    <div class="field-row">
+      <div class="field"><label>ISRC</label><input id="t_isrc" class="mono"></div>
+      <div class="field"><label>Distribuidora</label>
+        <select id="t_distributor"><option>Virgin Music</option><option>Sony Music</option><option>Empire África</option><option>Onerpm</option><option>Outra</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Compositores</label><input id="t_composers" placeholder="Nomes separados por vírgula"></div>
+      <div class="field"><label>Produtores</label><input id="t_producers" placeholder="Nomes separados por vírgula"></div>
+    </div>
+    <div class="field"><label>Letra</label><textarea id="t_lyrics" rows="6" placeholder="Cole a letra completa da música (opcional)"></textarea></div>
+    <div class="section-label">Participantes</div>
+    <div id="contributorsList"></div>
+    <div class="field-row" style="align-items:flex-end;">
+      <div class="field" style="margin-bottom:0;"><input id="newContribName" placeholder="Nome"></div>
+      <div class="field" style="margin-bottom:0;"><input id="newContribRole" placeholder="Função"></div>
+      <button class="btn small" id="addContribBtn" type="button" style="flex:0 0 auto;">+</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelTrackModal">Cancelar</button>
+      <button class="btn" id="saveTrackBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPLIER MODAL -->
+<div class="modal-bg" id="supplierModalBg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Fornecedor</h2>
+    <div class="field"><label>Categoria</label>
+      <select id="sp_category"><option>Som</option><option>Luz</option><option>Palco</option><option>Gerador</option><option>Hotel</option><option>Transporte</option><option>Catering</option><option>Segurança</option><option>Decoração</option><option>Outro</option></select>
+    </div>
+    <div class="field"><label>Nome</label><input id="sp_name"></div>
+    <div class="field"><label>Contato</label><input id="sp_contact"></div>
+    <div class="field"><label>Observações</label><textarea id="sp_notes" rows="3" placeholder="Condições, preços combinados, disponibilidade, etc."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelSupplierModal">Cancelar</button>
+      <button class="btn" id="saveSupplierBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-bg" id="userModalBg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="userModalTitle">Novo usuário</h2>
+    <div class="field-row">
+      <div class="field"><label>Nome</label><input id="u_name"></div>
+      <div class="field"><label>Usuário (login)</label><input id="u_username"></div>
+    </div>
+    <div class="field"><label>Senha</label><input id="u_password" type="password"></div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;text-transform:none;font-size:13px;color:var(--text);">
+        <input type="checkbox" id="u_isSeller" style="width:auto;margin:0;">
+        💼 É vendedor (pode ser marcado como responsável pela venda de shows)
+      </label>
+      <div class="field" style="margin-top:8px;margin-bottom:0;" id="u_commissionWrap">
+        <label>Comissão do vendedor (%) — opcional</label>
+        <input id="u_commission" placeholder="Ex: 10" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field">
+      <label>Tipo de acesso</label>
+      <div class="role-options">
+        <label><input type="radio" name="u_role" value="admin"> Admin<div class="role-desc">Cadastra e edita tudo, gerencia usuários</div></label>
+        <label><input type="radio" name="u_role" value="custom" checked> Acesso por artista<div class="role-desc">Defina abaixo, artista por artista, se ele é Editor, Leitor ou não tem acesso</div></label>
+      </div>
+    </div>
+    <div class="field" id="u_artistAccessWrap">
+      <label>Acesso por artista</label>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 8px;line-height:1.6;">Editor = adiciona e edita eventos, press kit e músicas daquele artista. Só músicas = só pode inserir e editar informações das músicas. Leitor = só visualiza.</p>
+      <div id="u_artistsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteUserBtn" style="display:none;">Remover</button>
+      <button class="btn ghost" id="cancelUserModal">Cancelar</button>
+      <button class="btn" id="saveUserBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNATURE MODAL -->
+<div class="modal-bg" id="sigModalBg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Assinar online</h2>
+    <div class="contract-box" id="sigContractPreview" style="max-height:160px;"></div>
+    <div class="field" style="margin-top:12px;"><label>Nome de quem está assinando</label><input id="sig_name"></div>
+    <label>Assinatura (desenhe abaixo com o dedo ou mouse)</label>
+    <div class="sig-pad-wrap"><canvas id="sigCanvas"></canvas></div>
+    <div class="sig-actions"><button class="btn small ghost" id="clearSigBtn" type="button">Limpar</button></div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;">Registra nome, desenho e data/hora como aceite digital simples — não é uma assinatura eletrônica certificada.</p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelSigModal">Cancelar</button>
+      <button class="btn" id="confirmSigBtn">Confirmar assinatura</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(err => console.log('Service Worker falhou:', err));
+}
+</script>
+</body>
+</html>
