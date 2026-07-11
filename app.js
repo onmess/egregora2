@@ -259,7 +259,7 @@ function currentViewingArtist(){ return viewingArtistId ? artists.find(a=>a.id==
 function renderArtistSwitcher(){
   const btn = document.getElementById('artistSwitchBtn');
   const a = currentViewingArtist();
-  const accessibleArtists = isAdmin() ? artists : artists.filter(ar=>canSeeArtist(ar.id));
+  const accessibleArtists = (isAdmin() ? artists : artists.filter(ar=>canSeeArtist(ar.id))).filter(ar=>!ar.archived);
   btn.innerHTML = (a ? escapeHtml(a.name) : (!isAdmin() ? 'Meus artistas' : 'Todos os artistas')) + ' <span class="chev">▾</span>';
   const menu = document.getElementById('artistSwitchMenu');
   const allOpt = !isAdmin() ? '' : `<button data-id="">Todos os artistas</button>`;
@@ -329,8 +329,9 @@ document.querySelectorAll('.subnavbtn').forEach(b=> b.addEventListener('click', 
 
 /* ---------- CALENDAR ---------- */
 function populateArtistSelects(){
-  const showArtists = isAdmin() ? artists : artists.filter(a=>canEditArtist(a.id));
-  const trackArtists = isAdmin() ? artists : artists.filter(a=>canEditTracks(a.id));
+  const act = artists.filter(a=>!a.archived);
+  const showArtists = isAdmin() ? act : act.filter(a=>canEditArtist(a.id));
+  const trackArtists = isAdmin() ? act : act.filter(a=>canEditTracks(a.id));
   document.getElementById('f_artist').innerHTML = showArtists.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
   document.getElementById('t_artist').innerHTML = trackArtists.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
   document.getElementById('e_artist').innerHTML = showArtists.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
@@ -739,14 +740,30 @@ document.getElementById('confirmSigBtn').addEventListener('click', ()=>{
 });
 
 /* ---------- ARTISTAS / PRESS KIT + CONTRATOS ---------- */
+let showArchivedArtists = false;
+let showArchivedTracks = false;
+document.getElementById('toggleArchivedArtists').addEventListener('click', ()=>{
+  showArchivedArtists = !showArchivedArtists;
+  document.getElementById('toggleArchivedArtists').textContent = showArchivedArtists ? '👁 ocultar desativados' : '🙈 ver desativados';
+  renderArtistList();
+});
+document.getElementById('toggleArchivedTracks').addEventListener('click', ()=>{
+  showArchivedTracks = !showArchivedTracks;
+  document.getElementById('toggleArchivedTracks').textContent = showArchivedTracks ? '👁 ocultar desativadas' : '🙈 ver desativadas';
+  renderTrackList();
+});
 function renderArtistList(){
   const el = document.getElementById('artistList');
-  const list = filterByViewingArtist(artists, 'id');
+  let list = filterByViewingArtist(artists, 'id');
+  const archivedCount = list.filter(a=>a.archived).length;
+  if(!showArchivedArtists) list = list.filter(a=>!a.archived);
+  document.getElementById('toggleArchivedArtists').style.display = (archivedCount>0 || showArchivedArtists) ? 'inline-flex' : 'none';
+  if(list.length===0){ el.innerHTML='<div class="empty-note">Nenhum artista.</div>'; return; }
   el.innerHTML = list.map(a=>`
-    <div class="artist-card" data-id="${a.id}">
+    <div class="artist-card ${a.archived?'archived-item':''}" data-id="${a.id}">
       ${a.logo ? `<img class="logo" src="${a.logo}">` : `<div class="logo">${escapeHtml((a.name[0]||'?').toUpperCase())}</div>`}
       <div class="info">
-        <div class="name">${escapeHtml(a.name)}</div>
+        <div class="name">${escapeHtml(a.name)} ${a.archived?'<span class="badge desativado">Desativado</span>':''}</div>
         <div class="sub">${a.cache?fmtCurrency(a.cache,a.currency||'EUR'):'sem cachê padrão'}</div>
         <div class="social-row">
           ${a.instagram?`<span class="social-chip">IG ${escapeHtml(a.instagram)}</span>`:''}
@@ -834,6 +851,11 @@ function openArtistModal(artistId){
   [...document.querySelectorAll('#artistModalBg input, #artistModalBg select, #artistModalBg textarea')].forEach(f=> f.disabled = !admin);
   document.querySelectorAll('#a_riderBtn,#a_photosBtn,#artistLogoBtn,#a_filesBtn,#a_contractsBtn').forEach(b=> b.style.display = admin?'inline-flex':'none');
   document.getElementById('saveArtistBtn').style.display = admin?'inline-flex':'none';
+  const archBtn = document.getElementById('archiveArtistBtn');
+  const delBtn = document.getElementById('deleteArtistBtn');
+  archBtn.style.display = (existing && isAdmin()) ? 'inline-flex' : 'none';
+  delBtn.style.display = (existing && isAdmin()) ? 'inline-flex' : 'none';
+  archBtn.textContent = existing?.archived ? '👁 Reativar' : '🙈 Desativar';
   document.getElementById('artistModalBg').classList.add('open');
 }
 document.getElementById('artistLogoBtn').addEventListener('click', ()=>document.getElementById('artistLogoFile').click());
@@ -917,19 +939,52 @@ document.getElementById('saveArtistBtn').addEventListener('click', ()=>{
   toast('Artista salvo.');
 });
 document.getElementById('newArtistBtn').addEventListener('click', ()=>openArtistModal(null));
+document.getElementById('archiveArtistBtn').addEventListener('click', ()=>{
+  if(!editingArtistId || !isAdmin()) return;
+  const a = artists.find(x=>x.id===editingArtistId);
+  if(!a) return;
+  const activating = !!a.archived;
+  if(!activating && !confirm(`Desativar "${a.name}"?\n\nEle será ocultado das listas e não poderá receber novos eventos/músicas, mas nada é apagado — os eventos e músicas existentes continuam no histórico. Você pode reativar quando quiser.`)) return;
+  artists = artists.map(x=> x.id===editingArtistId ? {...x, archived: !activating} : x);
+  store.set('artists', artists);
+  if(viewingArtistId===editingArtistId && !activating){ viewingArtistId = null; store.set('viewingArtistId', null); }
+  document.getElementById('artistModalBg').classList.remove('open');
+  populateArtistSelects(); renderArtistSwitcher(); renderArtistList(); renderCalendar(); renderShowList(); renderTrackList(); renderFinances();
+  toast(activating ? 'Artista reativado.' : 'Artista desativado (oculto).');
+});
+document.getElementById('deleteArtistBtn').addEventListener('click', ()=>{
+  if(!editingArtistId || !isAdmin()) return;
+  const a = artists.find(x=>x.id===editingArtistId);
+  if(!a) return;
+  const nShows = shows.filter(s=>s.artistId===editingArtistId).length;
+  const nTracks = tracks.filter(t=>t.artistId===editingArtistId).length;
+  let msg = `Excluir "${a.name}" DEFINITIVAMENTE?\n\nIsso apaga o perfil, press kit e contratos anexados do artista.`;
+  if(nShows||nTracks) msg += `\n\n⚠️ Ele tem ${nShows} evento(s) e ${nTracks} música(s), que continuarão no histórico como "(removido)".\n\nSe quiser apenas ocultar sem perder nada, use "Desativar" em vez de excluir.`;
+  if(!confirm(msg)) return;
+  if(!confirm('Tem CERTEZA? Esta ação não pode ser desfeita.')) return;
+  artists = artists.filter(x=> x.id !== editingArtistId);
+  store.set('artists', artists);
+  if(viewingArtistId===editingArtistId){ viewingArtistId = null; store.set('viewingArtistId', null); }
+  document.getElementById('artistModalBg').classList.remove('open');
+  populateArtistSelects(); renderArtistSwitcher(); renderArtistList(); renderCalendar(); renderShowList(); renderTrackList(); renderFinances();
+  toast('Artista excluído.');
+});
 
 /* ---------- MÚSICAS ---------- */
 function renderTrackList(){
   const el = document.getElementById('trackList');
-  const list = filterByViewingArtist(tracks, 'artistId');
+  let list = filterByViewingArtist(tracks, 'artistId');
+  const archivedCount = list.filter(t=>t.archived).length;
+  if(!showArchivedTracks) list = list.filter(t=>!t.archived);
+  document.getElementById('toggleArchivedTracks').style.display = (archivedCount>0 || showArchivedTracks) ? 'inline-flex' : 'none';
   if(list.length===0){ el.innerHTML='<div class="empty-note">Nenhuma música.</div>'; return; }
   el.innerHTML = list.map(t=>{
     const contribs = t.contributors||[];
     const allSigned = contribs.length>0 && contribs.every(c=>c.status==='assinado');
-    return `<div class="list-row">
+    return `<div class="list-row ${t.archived?'archived-item':''}">
       <div class="thumb">🎵</div>
       <div class="body">
-        <div class="title-line">${escapeHtml(t.title)} <span class="badge ${allSigned?'assinado':'pendente'}">${allSigned?'Assinado':'Pendente'}</span></div>
+        <div class="title-line">${escapeHtml(t.title)} <span class="badge ${allSigned?'assinado':'pendente'}">${allSigned?'Assinado':'Pendente'}</span>${t.archived?'<span class="badge desativado">Desativada</span>':''}</div>
         <div class="meta">${escapeHtml(artistName(t.artistId))} · ${escapeHtml(t.distributor||'—')}</div>
         <div class="meta mono">ISRC: ${escapeHtml(t.isrc||'—')}</div>
         ${t.composers?`<div class="meta">✍ ${escapeHtml(t.composers)}</div>`:''}
@@ -990,6 +1045,11 @@ function openTrackModal(trackId){
   renderContributors();
   [...document.querySelectorAll('#trackModalBg input, #trackModalBg select, #trackModalBg textarea')].forEach(f=> f.disabled = !admin);
   document.getElementById('saveTrackBtn').style.display = admin?'inline-flex':'none';
+  const tArchBtn = document.getElementById('archiveTrackBtn');
+  const tDelBtn = document.getElementById('deleteTrackBtn');
+  tArchBtn.style.display = (existing && admin) ? 'inline-flex' : 'none';
+  tDelBtn.style.display = (existing && admin) ? 'inline-flex' : 'none';
+  tArchBtn.textContent = existing?.archived ? '👁 Reativar' : '🙈 Desativar';
   document.getElementById('trackModalBg').classList.add('open');
 }
 document.getElementById('cancelTrackModal').addEventListener('click', ()=>document.getElementById('trackModalBg').classList.remove('open'));
@@ -1018,6 +1078,28 @@ document.getElementById('saveTrackBtn').addEventListener('click', ()=>{
   persistTrack(true);
 });
 document.getElementById('newTrackBtn').addEventListener('click', ()=>openTrackModal(null));
+document.getElementById('archiveTrackBtn').addEventListener('click', ()=>{
+  if(!editingTrackId) return;
+  const t = tracks.find(x=>x.id===editingTrackId);
+  if(!t || !canEditTracks(t.artistId)) return;
+  const activating = !!t.archived;
+  tracks = tracks.map(x=> x.id===editingTrackId ? {...x, archived: !activating} : x);
+  store.set('tracks', tracks);
+  document.getElementById('trackModalBg').classList.remove('open');
+  renderTrackList();
+  toast(activating ? 'Música reativada.' : 'Música desativada (oculta).');
+});
+document.getElementById('deleteTrackBtn').addEventListener('click', ()=>{
+  if(!editingTrackId) return;
+  const t = tracks.find(x=>x.id===editingTrackId);
+  if(!t || !canEditTracks(t.artistId)) return;
+  if(!confirm(`Excluir a música "${t.title}" DEFINITIVAMENTE?\n\nIsso apaga ISRC, letra, participantes e assinaturas. Se quiser apenas ocultar, use "Desativar".`)) return;
+  tracks = tracks.filter(x=> x.id !== editingTrackId);
+  store.set('tracks', tracks);
+  document.getElementById('trackModalBg').classList.remove('open');
+  renderTrackList();
+  toast('Música excluída.');
+});
 
 /* ---------- FORNECEDORES ---------- */
 function renderSupplierList(){
