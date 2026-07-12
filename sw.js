@@ -1,6 +1,6 @@
 // v3 — network-first para HTML/JS: atualizações do site chegam na hora,
 // e o cache só é usado quando estiver offline.
-const CACHE_NAME = 'egregora-v9';
+const CACHE_NAME = 'egregora-v10';
 const PRECACHE = [
   './',
   './index.html',

@@ -288,6 +288,12 @@ function renderArtistSwitcher(){
     });
   });
 }
+// Move o menu de artistas para o <body> para que NUNCA fique preso atrás
+// de cards por causa do contexto de empilhamento da topbar (backdrop-filter/z-index).
+(function relocateArtistMenu(){
+  const menu = document.getElementById('artistSwitchMenu');
+  if(menu && menu.parentElement !== document.body){ document.body.appendChild(menu); }
+})();
 document.getElementById('artistSwitchBtn').addEventListener('click', (e)=>{
   e.stopPropagation();
   const menu = document.getElementById('artistSwitchMenu');
@@ -295,7 +301,7 @@ document.getElementById('artistSwitchBtn').addEventListener('click', (e)=>{
   menu.classList.toggle('hidden');
   if(willOpen){
     // posiciona o menu logo abaixo do botão, centralizado nele, sempre por cima
-    const r = e.currentTarget.getBoundingClientRect();
+    const r = document.getElementById('artistSwitchBtn').getBoundingClientRect();
     menu.style.top = (r.bottom + 6) + 'px';
     menu.style.left = Math.min(Math.max(r.left + r.width/2, 120), window.innerWidth - 120) + 'px';
     menu.style.transform = 'translateX(-50%)';
