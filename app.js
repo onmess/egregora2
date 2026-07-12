@@ -198,7 +198,9 @@ function doLogin(){
     return;
   }
   document.getElementById('loginError').classList.remove('show');
-  store.set('sessionUserId', u.id);
+  // Sessão salva por 1 semana (7 dias). Depois disso, pede login de novo.
+  const SETE_DIAS = 7 * 24 * 60 * 60 * 1000;
+  store.set('session', { userId: u.id, expiresAt: Date.now() + SETE_DIAS });
   document.body.classList.remove('locked');
   applyLoggedUser(u.id);
   toast(`Bem-vindo(a), ${u.name}!`);
@@ -208,6 +210,7 @@ document.getElementById('login_password').addEventListener('keydown', e=>{ if(e.
 document.getElementById('login_username').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('login_password').focus(); });
 document.getElementById('logoutBtn').addEventListener('click', ()=>{
   if(!confirm('Sair da conta?')) return;
+  store.set('session', null);
   store.set('sessionUserId', null);
   showLoginScreen();
 });
@@ -321,11 +324,11 @@ document.querySelectorAll('.navbtn').forEach(b=>{
 });
 
 /* ---------- AGENDA SUBNAV ---------- */
-function switchAgendaSub(sub){
-  document.querySelectorAll('.subnavbtn').forEach(x=> x.classList.toggle('active', x.dataset.sub===sub));
-  document.querySelectorAll('.subview-agenda').forEach(x=> x.classList.toggle('active', x.id==='sub-'+sub));
+// Vai até uma aba da barra inferior pelo nome (ex.: 'contratos', 'agenda')
+function goToTab(tab){
+  const btn = document.querySelector(`.navbtn[data-tab="${tab}"]`);
+  if(btn) btn.click();
 }
-document.querySelectorAll('.subnavbtn').forEach(b=> b.addEventListener('click', ()=> switchAgendaSub(b.dataset.sub)));
 
 /* ---------- CALENDAR ---------- */
 function populateArtistSelects(){
@@ -400,13 +403,23 @@ function renderShowList(){
         <div class="meta">${d}/${m}/${y} ${s.time||''} — ${escapeHtml(s.venue||'')}${s.city?', '+escapeHtml(s.city):''}</div>
         <div class="meta">${valueMaskHtml('show-'+s.id, s.value, s.currency||'EUR')}${cl.length?` · ☑ ${done}/${cl.length}`:''}${s.sellerId?` · 💼 ${escapeHtml(sellerName(s.sellerId))}`:''}</div>
       </div>
-      <div class="actions"><button class="edit" data-id="${s.id}">${admin?'editar':'ver'}</button><button class="contract" data-id="${s.id}">contrato</button></div>
+      <div class="actions"><button class="edit" data-id="${s.id}">${admin?'editar':'ver'}</button><button class="contract" data-id="${s.id}">contrato</button>${admin?`<button class="del delshow" data-id="${s.id}">🗑 excluir</button>`:''}</div>
     </div>`;
   }).join('');
   el.querySelectorAll('.edit').forEach(b=>b.addEventListener('click', ()=>openShowModal(b.dataset.id)));
   el.querySelectorAll('.contract').forEach(b=>b.addEventListener('click', ()=>{
     const s = shows.find(x=>x.id===b.dataset.id);
-    if(s){ showContract(s); switchAgendaSub('contratos'); }
+    if(s){ showContract(s); goToTab('contratos'); }
+  }));
+  el.querySelectorAll('.delshow').forEach(b=>b.addEventListener('click', ()=>{
+    const s = shows.find(x=>x.id===b.dataset.id);
+    if(!s) return;
+    const [y,m,d]=s.date.split('-');
+    if(!confirm(`Excluir o evento de ${artistName(s.artistId)} em ${d}/${m}/${y} (${s.venue||'sem local'})?\n\nEsta ação não pode ser desfeita.`)) return;
+    shows = shows.filter(x=> x.id !== b.dataset.id);
+    store.set('shows', shows);
+    renderCalendar(); renderShowList(); renderFinances(); renderContactsList();
+    toast('Evento excluído.');
   }));
   bindValueMasks(el);
 }
@@ -607,7 +620,7 @@ document.getElementById('saveShowBtn').addEventListener('click', ()=>{
   else { saved = {id:uid(), ...data}; shows.push(saved); }
   store.set('shows', shows);
   document.getElementById('showModalBg').classList.remove('open');
-  renderCalendar(); renderShowList(); showContract(saved); switchAgendaSub('contratos'); renderFinances(); renderContactsList();
+  renderCalendar(); renderShowList(); showContract(saved); goToTab('contratos'); renderFinances(); renderContactsList();
 });
 
 /* ---------- CONTRACT + ONLINE SIGNATURE ---------- */
@@ -628,7 +641,7 @@ function buildContractText(s){
     : '  —';
   return `CONTRATO DE PRESTAÇÃO DE SERVIÇOS — ${(s.eventType||'EVENTO').toUpperCase()}
 =================================================
-CONTRATADO: OnMess
+CONTRATADO: Egrégora
 ARTISTA/ATRAÇÃO: ${artistName(s.artistId)}
 
 LOCAL DO EVENTO: ${s.venue||'[local]'} — ${s.city||'[cidade]'}
@@ -911,7 +924,7 @@ document.getElementById('pkEmailBtn').addEventListener('click', ()=>{
   const artistName = document.getElementById('a_name').value || 'Artista';
   const items = collectPressKitItems();
   if(items.length===0){ toast('Marque pelo menos um item para enviar.'); return; }
-  emailWithFiles(items, `Press kit — ${artistName}`, `Segue o press kit de ${artistName}.\n\n— OnMess`);
+  emailWithFiles(items, `Press kit — ${artistName}`, `Segue o press kit de ${artistName}.\n\n— Egrégora`);
 });
 document.getElementById('pkShareBtn').addEventListener('click', ()=>{
   const artistName = document.getElementById('a_name').value || 'Artista';
@@ -1429,14 +1442,26 @@ document.getElementById('finWhatsappBtn').addEventListener('click', ()=>{
   const period = document.getElementById('finPeriodFilter').value;
   const now = new Date();
   const periodLabel = period==='month'?`${MONTHS[now.getMonth()]} ${now.getFullYear()}`:period==='year'?now.getFullYear():'todo período';
-  const msg = `Olá! Segue o relatório financeiro de ${artist?artist.name:'OnMess'} referente a ${periodLabel}. Confira em anexo a planilha completa.`;
+  const msg = `Olá! Segue o relatório financeiro de ${artist?artist.name:'Egrégora'} referente a ${periodLabel}. Confira em anexo a planilha completa.`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
 });
 
 /* ---------- INICIALIZAÇÃO ---------- */
-// O login SEMPRE aparece ao abrir o app (não guarda sessão entre visitas).
-applyLoggedUser(currentUserId); // prepara os renders internamente
-showLoginScreen();              // bloqueia com a tela de login
+// Login fica salvo por 1 semana. Se a sessão ainda for válida, entra direto;
+// senão (ou expirada), mostra a tela de login.
+(function initSession(){
+  const session = store.get('session', null);
+  const valid = session && session.userId && session.expiresAt && Date.now() < session.expiresAt
+                && users.some(u => u.id === session.userId);
+  if(valid){
+    document.body.classList.remove('locked');
+    applyLoggedUser(session.userId);
+  } else {
+    if(session) store.set('session', null); // limpa sessão expirada
+    applyLoggedUser(currentUserId); // prepara os renders internamente
+    showLoginScreen();              // bloqueia com a tela de login
+  }
+})();
 
 /* URL para assinatura pública (signing mode) */
 const params = new URLSearchParams(location.search);
