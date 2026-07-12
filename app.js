@@ -290,8 +290,18 @@ function renderArtistSwitcher(){
 }
 document.getElementById('artistSwitchBtn').addEventListener('click', (e)=>{
   e.stopPropagation();
-  document.getElementById('artistSwitchMenu').classList.toggle('hidden');
+  const menu = document.getElementById('artistSwitchMenu');
+  const willOpen = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden');
+  if(willOpen){
+    // posiciona o menu logo abaixo do botão, centralizado nele, sempre por cima
+    const r = e.currentTarget.getBoundingClientRect();
+    menu.style.top = (r.bottom + 6) + 'px';
+    menu.style.left = Math.min(Math.max(r.left + r.width/2, 120), window.innerWidth - 120) + 'px';
+    menu.style.transform = 'translateX(-50%)';
+  }
 });
+document.getElementById('artistSwitchMenu').addEventListener('click', e=> e.stopPropagation());
 document.addEventListener('click', ()=> document.getElementById('artistSwitchMenu').classList.add('hidden'));
 function filterByViewingArtist(list, artistKey){
   let out = list;
