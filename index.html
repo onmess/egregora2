@@ -303,6 +303,38 @@
   @media (max-height: 700px){
     .card{margin-bottom:10px;}
   }
+  /* ===== MENU "OUTROS" (botões grandes) ===== */
+  .menu-btn{display:flex;align-items:center;gap:13px;width:100%;background:linear-gradient(180deg,rgba(255,255,255,0.04),transparent);border:1px solid var(--border);border-radius:16px;padding:16px 15px;margin-bottom:11px;cursor:pointer;text-align:left;color:var(--text);transition:transform .12s, border-color .12s;font-family:'Inter';}
+  .menu-btn:active{transform:scale(0.98);border-color:rgba(255,255,255,0.22);}
+  .menu-btn .mi{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .menu-btn .mt{flex:1;min-width:0;}
+  .menu-btn .mt .t{font-family:'Fraunces';font-weight:700;font-size:15px;display:flex;align-items:center;gap:7px;}
+  .menu-btn .mt .s{font-size:11px;color:var(--muted);margin-top:2px;}
+  .menu-btn .ch{color:var(--muted);font-size:18px;flex-shrink:0;}
+  .menu-btn.vault-btn{border-color:rgba(255,178,56,0.35);background:linear-gradient(180deg,rgba(255,178,56,0.08),transparent);}
+  .menu-btn.vault-btn .mi{background:var(--warning-soft);}
+  .lock-badge{font-size:9px;font-weight:700;background:var(--warning-soft);color:var(--warning);padding:2px 7px;border-radius:20px;letter-spacing:0.3px;}
+  .outros-sub{display:none;}
+  .outros-sub.active{display:block;}
+  .back-btn{margin-bottom:12px;}
+  .btn.mail{background:#1faa6d;color:#fff;}
+
+  /* ===== COFRE DE ARTISTAS ===== */
+  .vault-note{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.5;background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);}
+  .vault-note .vn-date{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);margin-bottom:4px;}
+  .vault-note .vn-actions{display:flex;gap:10px;margin-top:6px;}
+  .vault-note .vn-actions button{background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;font-weight:600;}
+  .vault-file{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:10px;padding:9px 11px;margin-bottom:7px;font-size:12.5px;background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);}
+  .vault-file a{color:var(--text);text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .vault-file .rm{background:none;border:none;color:var(--danger);cursor:pointer;flex-shrink:0;}
+  .vault-locked{text-align:center;padding:34px 16px;color:var(--muted);}
+  .vault-locked .ic{font-size:44px;margin-bottom:10px;}
+
+  /* ===== MARCA D'ÁGUA (LOGO DE FUNDO) ===== */
+  #appWatermark{position:fixed;inset:0;z-index:0;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+  #appWatermark img{width:min(66vw, 340px);opacity:0.05;filter:grayscale(0.2);}
+  .wrap, .topbar, .bottomnav{position:relative;z-index:2;}
+  .fab{z-index:25;}
 </style>
 </head>
 <body>
@@ -359,6 +391,8 @@
   </div>
 </div>
 
+<div id="appWatermark"><img id="watermarkImg" src="egregora_logo.jpg" alt="" onerror="this.style.display='none'"></div>
+
 <div class="wrap">
 
   <!-- AGENDA -->
@@ -372,20 +406,92 @@
       <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
     </div>
     <div class="card"><div class="stats-grid" id="statsGrid"></div></div>
+  </div>
 
+  <!-- EVENTOS (aba própria) -->
+  <div class="view" id="view-eventos">
     <div class="card">
-      <div class="card-title">Eventos &amp; shows</div>
+      <div class="card-title">EVENTOS</div>
       <div id="showList"></div>
     </div>
   </div>
 
-  <!-- CONTRATOS (aba própria) -->
-  <div class="view" id="view-contratos">
-    <div class="card">
-      <div class="card-title">CONTRATOS</div>
-      <div id="contractArea"><div class="empty-note">Toque em "contrato" num evento (na aba Agenda) para gerar e assinar aqui.</div></div>
+  <!-- OUTROS (menu para Contratos, Fornecedores, Contatos, Artistas-cofre) -->
+  <div class="view" id="view-outros">
+    <div id="outrosMenu">
+      <button class="menu-btn" data-sub="contratos">
+        <div class="mi">📄</div>
+        <div class="mt"><div class="t">Contratos</div><div class="s">Gerar, enviar e assinar contratos dos eventos</div></div>
+        <div class="ch">›</div>
+      </button>
+      <button class="menu-btn" data-sub="fornecedores">
+        <div class="mi">🧰</div>
+        <div class="mt"><div class="t">Fornecedores</div><div class="s">Som, luz, hotel, transporte, catering…</div></div>
+        <div class="ch">›</div>
+      </button>
+      <button class="menu-btn" data-sub="contatos">
+        <div class="mi">📇</div>
+        <div class="mt"><div class="t">Contatos</div><div class="s">Base automática + Mailing (e-mails)</div></div>
+        <div class="ch">›</div>
+      </button>
+      <button class="menu-btn vault-btn" id="vaultMenuBtn" data-sub="cofre">
+        <div class="mi">🔒</div>
+        <div class="mt"><div class="t">Artistas <span class="lock-badge">restrito</span></div><div class="s">Cofre: contratos, negociações e documentos sensíveis</div></div>
+        <div class="ch">›</div>
+      </button>
+    </div>
+
+    <!-- SUB: Contratos -->
+    <div class="outros-sub" id="sub-contratos">
+      <button class="btn ghost small back-btn">‹ Voltar</button>
+      <div class="card">
+        <div class="card-title">CONTRATOS</div>
+        <div id="contractArea"><div class="empty-note">Toque em "contrato" num evento (na aba Eventos) para gerar e assinar aqui.</div></div>
+      </div>
+    </div>
+
+    <!-- SUB: Fornecedores -->
+    <div class="outros-sub" id="sub-fornecedores">
+      <button class="btn ghost small back-btn">‹ Voltar</button>
+      <div class="card">
+        <div class="card-title">FORNECEDORES</div>
+        <div id="supplierList"></div>
+        <button class="btn secondary full" id="newSupplierBtn">+ Novo fornecedor</button>
+      </div>
+    </div>
+
+    <!-- SUB: Contatos -->
+    <div class="outros-sub" id="sub-contatos">
+      <button class="btn ghost small back-btn">‹ Voltar</button>
+      <div class="card">
+        <div class="card-title">CONTATOS <span style="font-family:'Inter';font-style:normal;font-weight:400;font-size:11px;color:var(--muted);">base automática</span></div>
+        <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:0;">Montada a partir dos contratantes dos eventos e dos fornecedores. Sempre atualizada.</p>
+        <div class="filters">
+          <select id="filterContactType">
+            <option value="">Todos</option>
+            <option value="contratante">Contratantes</option>
+            <option value="fornecedor">Fornecedores</option>
+          </select>
+          <input id="searchContact" placeholder="Buscar por nome ou e-mail" style="flex:2;min-width:140px;font-size:12px;padding:8px 10px;">
+        </div>
+        <div id="contactsList"></div>
+        <button class="btn mail full" id="mailingBtn" style="margin-bottom:8px;">📧 Baixar MAILING (nome + e-mail)</button>
+        <button class="btn secondary full" id="exportContactsBtn">⬇ Exportar contatos completos (.csv)</button>
+      </div>
+    </div>
+
+    <!-- SUB: Cofre de Artistas (restrito) -->
+    <div class="outros-sub" id="sub-cofre">
+      <button class="btn ghost small back-btn">‹ Voltar</button>
+      <div class="card">
+        <div class="card-title">🔒 COFRE DE ARTISTAS</div>
+        <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:0;">Documentos sensíveis por artista: contratos, negociações, anotações. Visível apenas para usuários autorizados.</p>
+        <div class="field"><label>Artista</label><select id="vaultArtistSelect"></select></div>
+        <div id="vaultContent"></div>
+      </div>
     </div>
   </div>
+
 
   <!-- ARTISTAS -->
   <div class="view" id="view-artistas">
@@ -464,39 +570,12 @@
     </div>
   </div>
 
-  <!-- FORNECEDORES -->
-  <div class="view" id="view-fornecedores">
-    <div class="card">
-      <div class="card-title">FORNECEDORES</div>
-      <div id="supplierList"></div>
-      <button class="btn secondary full" id="newSupplierBtn">+ Novo fornecedor</button>
-    </div>
-  </div>
-
-  <!-- USUÁRIOS -->
+  <!-- USUÁRIOS (Equipe) -->
   <div class="view" id="view-equipe">
     <div class="card">
-      <div class="card-title">USUÁRIOS</div>
+      <div class="card-title">EQUIPE</div>
       <div id="usersList"></div>
       <button class="btn secondary full" id="newUserBtn">+ Novo usuário</button>
-    </div>
-  </div>
-
-  <!-- CONTATOS -->
-  <div class="view" id="view-contatos">
-    <div class="card">
-      <div class="card-title">CONTATOS <span style="font-family:'Inter';font-style:normal;font-weight:400;font-size:11px;color:var(--muted);">base de dados automática</span></div>
-      <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:0;">Montada automaticamente a partir dos contratantes dos eventos e dos fornecedores cadastrados. Sempre atualizada — não precisa cadastrar nada aqui.</p>
-      <div class="filters">
-        <select id="filterContactType">
-          <option value="">Todos</option>
-          <option value="contratante">Contratantes</option>
-          <option value="fornecedor">Fornecedores</option>
-        </select>
-        <input id="searchContact" placeholder="Buscar por nome ou e-mail" style="flex:2;min-width:140px;font-size:12px;padding:8px 10px;">
-      </div>
-      <div id="contactsList"></div>
-      <button class="btn secondary full" id="exportContactsBtn">⬇ Exportar contatos (.csv)</button>
     </div>
   </div>
 
@@ -508,13 +587,12 @@
 
 <div class="bottomnav">
   <button class="navbtn active" data-tab="agenda"><span class="ic">📅</span>Agenda</button>
-  <button class="navbtn" data-tab="contratos"><span class="ic">📄</span>Contratos</button>
+  <button class="navbtn" data-tab="eventos"><span class="ic">🎫</span>Eventos</button>
   <button class="navbtn" data-tab="artistas"><span class="ic">🎤</span>Artistas</button>
   <button class="navbtn" data-tab="musicas"><span class="ic">🎵</span>Músicas</button>
   <button class="navbtn" data-tab="financas"><span class="ic">💰</span>Finanças</button>
-  <button class="navbtn" data-tab="fornecedores"><span class="ic">🧰</span>Fornec.</button>
-  <button class="navbtn" data-tab="contatos"><span class="ic">📇</span>Contatos</button>
-  <button class="navbtn" data-tab="equipe"><span class="ic">👥</span>Equipe</button>
+  <button class="navbtn" data-tab="outros"><span class="ic">📂</span>Outros</button>
+  <button class="navbtn" data-tab="equipe" id="navEquipe"><span class="ic">👥</span>Equipe</button>
 </div>
 
 <!-- SHOW MODAL -->
@@ -773,6 +851,13 @@
         <label>Comissão do vendedor (%) — opcional</label>
         <input id="u_commission" placeholder="Ex: 10" inputmode="numeric">
       </div>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;border:1.5px solid var(--warning);background:var(--warning-soft);border-radius:12px;padding:10px 12px;text-transform:none;font-size:13px;color:var(--text);">
+        <input type="checkbox" id="u_vaultAccess" style="width:auto;margin:0;">
+        🔒 Acesso ao cofre de Artistas (documentos sensíveis: contratos, negociações)
+      </label>
+      <p style="font-size:10.5px;color:var(--muted);margin:5px 2px 0;line-height:1.5;">Marque apenas as pessoas de confiança. Admin sempre tem acesso.</p>
     </div>
     <div class="field">
       <label>Tipo de acesso</label>

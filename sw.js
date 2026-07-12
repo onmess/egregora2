@@ -1,11 +1,12 @@
 // v3 — network-first para HTML/JS: atualizações do site chegam na hora,
 // e o cache só é usado quando estiver offline.
-const CACHE_NAME = 'egregora-v6';
+const CACHE_NAME = 'egregora-v8';
 const PRECACHE = [
   './',
   './index.html',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './egregora_logo.jpg'
 ];
 
 self.addEventListener('install', event => {

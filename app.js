@@ -89,6 +89,7 @@ let shows = store.get('shows', []);
 let tracks = store.get('tracks', []);
 let suppliers = store.get('suppliers', []);
 let expenses = store.get('expenses', []);
+let vault = store.get('vault', {}); // { artistId: { notes:[{id,text,at}], files:[{id,name,url,at}] } }
 let calDate = new Date();
 let editingShowId=null, editingArtistId=null, editingTrackId=null, editingSupplierId=null;
 let modalContributors = [], modalChecklist = [], modalPhotos = [], modalContracts = [], modalLogo = '', modalRider = '', modalFiles = [], modalHirerDoc = '';
@@ -132,6 +133,9 @@ const MONTHS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Ago
 const STATUS_LABELS={confirmado:'Confirmado',reserva:'Reserva',imprensa:'Imprensa',tramite:'Trâmite'};
 
 function isAdmin(){ return currentRole==='admin'; }
+function currentUserObj(){ return users.find(u=>u.id===currentUserId); }
+function canSeeVault(){ const u = currentUserObj(); return isAdmin() || (u && !!u.vaultAccess); }
+function canSeeEquipe(){ const u = currentUserObj(); if(isAdmin()) return true; return u && Object.values(computeAccess(u)||{}).includes('editor'); }
 function canEdit(){
   if(isAdmin()) return true;
   return currentArtistAccess && Object.values(currentArtistAccess).includes('editor');
@@ -236,6 +240,12 @@ function applyRoleUI(){
   document.getElementById('newArtistBtn').style.display = isAdmin()?'flex':'none';
   document.getElementById('newUserBtn').style.display = isAdmin()?'inline-flex':'none';
   document.getElementById('fabNewShow').style.display = editable?'flex':'none';
+  // Aba Equipe: só Admin ou Editor
+  const navEquipe = document.getElementById('navEquipe');
+  if(navEquipe) navEquipe.style.display = canSeeEquipe() ? 'flex' : 'none';
+  // Botão do cofre no menu Outros: só quem tem acesso
+  const vaultBtn = document.getElementById('vaultMenuBtn');
+  if(vaultBtn) vaultBtn.style.display = canSeeVault() ? 'flex' : 'none';
 }
 
 /* ---------- BRAND LOGO ---------- */
@@ -320,12 +330,38 @@ document.querySelectorAll('.navbtn').forEach(b=>{
     b.classList.add('active');
     document.getElementById('view-'+b.dataset.tab).classList.add('active');
     if(b.dataset.tab==='financas') renderFinances();
+    if(b.dataset.tab==='eventos') renderShowList();
+    if(b.dataset.tab==='outros'){ showOutrosMenu(); }
+    document.querySelector('.wrap').scrollTop = 0;
+    window.scrollTo(0,0);
   });
 });
 
+/* ---------- OUTROS (menu → sub-telas) ---------- */
+function showOutrosMenu(){
+  document.getElementById('outrosMenu').style.display = 'block';
+  document.querySelectorAll('.outros-sub').forEach(s=> s.classList.remove('active'));
+}
+function openOutrosSub(sub){
+  if(sub==='cofre' && !canSeeVault()){ toast('Você não tem acesso ao cofre de Artistas.'); return; }
+  document.getElementById('outrosMenu').style.display = 'none';
+  document.querySelectorAll('.outros-sub').forEach(s=> s.classList.toggle('active', s.id==='sub-'+sub));
+  if(sub==='fornecedores') renderSupplierList();
+  if(sub==='contatos') renderContactsList();
+  if(sub==='cofre') openVault();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('#outrosMenu .menu-btn').forEach(b=> b.addEventListener('click', ()=> openOutrosSub(b.dataset.sub)));
+document.querySelectorAll('.outros-sub .back-btn').forEach(b=> b.addEventListener('click', showOutrosMenu));
+
 /* ---------- AGENDA SUBNAV ---------- */
-// Vai até uma aba da barra inferior pelo nome (ex.: 'contratos', 'agenda')
+// Vai até uma aba da barra inferior pelo nome; para contratos, abre a sub-tela dentro de Outros
 function goToTab(tab){
+  if(tab==='contratos'){
+    document.querySelector('.navbtn[data-tab="outros"]').click();
+    openOutrosSub('contratos');
+    return;
+  }
   const btn = document.querySelector(`.navbtn[data-tab="${tab}"]`);
   if(btn) btn.click();
 }
@@ -1178,6 +1214,7 @@ function openUserModal(userId){
   document.getElementById('u_password').value = existing?.password||'';
   document.getElementById('u_isSeller').checked = !!existing?.isSeller;
   document.getElementById('u_commission').value = existing?.commission||'';
+  document.getElementById('u_vaultAccess').checked = !!existing?.vaultAccess;
   document.getElementById('u_commissionWrap').style.display = existing?.isSeller ? 'block' : 'none';
   document.querySelector('input[name="u_role"][value="' + (existing?.role||'custom') + '"]').checked = true;
   const isEditingAdmin = existing?.role==='admin';
@@ -1214,7 +1251,8 @@ document.getElementById('saveUserBtn').addEventListener('click', ()=>{
   if(usernameTaken){ toast('Já existe um usuário com esse login. Escolha outro.'); return; }
   const data = {name, username, password, role, artistAccess:{},
     isSeller: document.getElementById('u_isSeller').checked,
-    commission: document.getElementById('u_commission').value.trim()};
+    commission: document.getElementById('u_commission').value.trim(),
+    vaultAccess: document.getElementById('u_vaultAccess').checked};
   if(role==='custom'){
     document.getElementById('u_artistsList').querySelectorAll('select').forEach(sel=>{
       if(sel.value) data.artistAccess[sel.dataset.id] = sel.value;
@@ -1294,10 +1332,131 @@ document.getElementById('exportContactsBtn').addEventListener('click', ()=>{
   const csv = 'Nome,Email,Telefone,Tipo\n' + list.map(c=>`"${c.name}","${c.email}","${c.phone}","${c.type}"`).join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'contatos-onmess.csv';
+  a.download = 'contatos-egregora.csv';
   a.click();
   toast('Contatos exportados.');
 });
+
+/* ---------- MAILING (só nome + e-mail) ---------- */
+function buildContactsWithEmail(){
+  const contacts = new Map();
+  shows.forEach(s=>{
+    if(s.hirerName){
+      // dois possíveis e-mails do contratante
+      [s.hirerEmail1, s.hirerEmail2].forEach(em=>{
+        if(em && em.trim()){
+          const key = em.trim().toLowerCase();
+          if(!contacts.has(key)) contacts.set(key, {name:s.hirerName, email:em.trim()});
+        }
+      });
+    }
+  });
+  // fornecedores: se o "contato" tiver cara de e-mail
+  suppliers.forEach(sp=>{
+    if(sp.contact && sp.contact.includes('@')){
+      const key = sp.contact.trim().toLowerCase();
+      if(!contacts.has(key)) contacts.set(key, {name:sp.name, email:sp.contact.trim()});
+    }
+  });
+  return [...contacts.values()];
+}
+document.getElementById('mailingBtn').addEventListener('click', ()=>{
+  const list = buildContactsWithEmail();
+  if(list.length===0){ toast('Nenhum e-mail cadastrado ainda nos eventos/fornecedores.'); return; }
+  // CSV com BOM para abrir certinho no Excel (acentos) — abre também como XLS
+  const header = 'Nome,Email\n';
+  const body = list.map(c=>`"${c.name.replace(/"/g,'""')}","${c.email}"`).join('\r\n');
+  const csv = '\ufeff' + header + body;
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'mailing-egregora.csv';
+  a.click();
+  toast(`Mailing exportado: ${list.length} e-mail(s).`);
+});
+
+/* ---------- COFRE DE ARTISTAS (restrito) ---------- */
+let vaultArtistId = null;
+let vaultFileInput = null;
+function openVault(){
+  const sel = document.getElementById('vaultArtistSelect');
+  const list = artists.filter(a=>!a.archived);
+  if(list.length===0){
+    document.getElementById('vaultContent').innerHTML = '<div class="empty-note">Cadastre um artista primeiro.</div>';
+    sel.innerHTML = '';
+    return;
+  }
+  sel.innerHTML = list.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+  if(!vaultArtistId || !list.some(a=>a.id===vaultArtistId)) vaultArtistId = list[0].id;
+  sel.value = vaultArtistId;
+  renderVault();
+}
+document.getElementById('vaultArtistSelect').addEventListener('change', (e)=>{ vaultArtistId = e.target.value; renderVault(); });
+function renderVault(){
+  const el = document.getElementById('vaultContent');
+  if(!canSeeVault()){ el.innerHTML = '<div class="vault-locked"><div class="ic">🔒</div>Você não tem acesso a este cofre.</div>'; return; }
+  const data = vault[vaultArtistId] || {notes:[], files:[]};
+  const notes = data.notes || [];
+  const files = data.files || [];
+  el.innerHTML = `
+    <div class="section-label">Anotações / negociações</div>
+    <div id="vaultNotes">${notes.length ? notes.map(n=>`
+      <div class="vault-note">
+        <div class="vn-date">${new Date(n.at).toLocaleString('pt-BR')}</div>
+        <div>${escapeHtml(n.text).replace(/\n/g,'<br>')}</div>
+        <div class="vn-actions"><button data-id="${n.id}" class="rmnote">🗑 remover</button></div>
+      </div>`).join('') : '<div class="empty-note">Nenhuma anotação ainda.</div>'}</div>
+    <div class="field" style="margin-top:8px;">
+      <textarea id="newVaultNote" rows="3" placeholder="Escreva aqui uma negociação, condição combinada, lembrete..."></textarea>
+    </div>
+    <button class="btn secondary full" id="addVaultNoteBtn" style="margin-bottom:16px;">+ Salvar anotação</button>
+
+    <div class="section-label">Arquivos (contratos, documentos)</div>
+    <div id="vaultFiles">${files.length ? files.map(f=>`
+      <div class="vault-file">
+        📎 <a href="${f.url}" download="${escapeHtml(f.name)}" target="_blank">${escapeHtml(f.name)}</a>
+        <button data-id="${f.id}" class="rm rmfilevault">×</button>
+      </div>`).join('') : '<div class="empty-note">Nenhum arquivo ainda.</div>'}</div>
+    <button class="btn full" id="addVaultFileBtn">📎 Anexar arquivo</button>
+    <input type="file" id="vaultFileInputEl" accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" style="display:none;">
+  `;
+  // anotações
+  document.getElementById('addVaultNoteBtn').addEventListener('click', ()=>{
+    const text = document.getElementById('newVaultNote').value.trim();
+    if(!text) return;
+    if(!vault[vaultArtistId]) vault[vaultArtistId] = {notes:[], files:[]};
+    vault[vaultArtistId].notes = vault[vaultArtistId].notes || [];
+    vault[vaultArtistId].notes.unshift({id:uid(), text, at:new Date().toISOString()});
+    store.set('vault', vault);
+    renderVault();
+    toast('Anotação salva no cofre.');
+  });
+  el.querySelectorAll('.rmnote').forEach(b=> b.addEventListener('click', ()=>{
+    if(!confirm('Remover esta anotação?')) return;
+    vault[vaultArtistId].notes = vault[vaultArtistId].notes.filter(n=>n.id!==b.dataset.id);
+    store.set('vault', vault);
+    renderVault();
+  }));
+  // arquivos
+  document.getElementById('addVaultFileBtn').addEventListener('click', ()=> document.getElementById('vaultFileInputEl').click());
+  document.getElementById('vaultFileInputEl').addEventListener('change', async (e)=>{
+    for(const file of [...e.target.files]){
+      const url = await fileToDataUrl(file);
+      if(!vault[vaultArtistId]) vault[vaultArtistId] = {notes:[], files:[]};
+      vault[vaultArtistId].files = vault[vaultArtistId].files || [];
+      vault[vaultArtistId].files.unshift({id:uid(), name:file.name, url, at:new Date().toISOString()});
+    }
+    store.set('vault', vault);
+    renderVault();
+    toast('Arquivo guardado no cofre.');
+    e.target.value = '';
+  });
+  el.querySelectorAll('.rmfilevault').forEach(b=> b.addEventListener('click', ()=>{
+    if(!confirm('Remover este arquivo do cofre?')) return;
+    vault[vaultArtistId].files = vault[vaultArtistId].files.filter(f=>f.id!==b.dataset.id);
+    store.set('vault', vault);
+    renderVault();
+  }));
+}
 
 /* ---------- FINANÇAS ---------- */
 let expenseReceiptFile = null;
